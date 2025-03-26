@@ -6,7 +6,7 @@ redirect_from:
   - /about/
   - /about.html
 ---
-Qianna Cui, female, is a Ph.D of computer science,  her reserch includes: machine learning, deep learning, knowledge graph, remote sensing image analysis, combinatorial optimization, graph model.
+Qianna Cui, female, is a Ph.D of computer science,  her reserch includes: machine learning, deep learning, remote sensing image analysis, graph model,  knowledge graph, approximate algorithm, combinatorial optimization, parallel computation.
 
 Aacademic Achievements
 ======
