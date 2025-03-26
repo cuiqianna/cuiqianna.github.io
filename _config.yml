@@ -22,7 +22,7 @@ repository               : "academicpages/academicpages.github.io"
 #               Additional customization can be done by editing /_includes/author-profile.html
 author:
   # Biographic information
-  avatar           : ./images/IMG_2080.JPG
+  avatar           : "IMG_2080.JPG"
   name             : "Qianna Cui(崔倩娜)"
   pronouns         : "female"  
   bio              : "She was born in Anyang, Henan province."
