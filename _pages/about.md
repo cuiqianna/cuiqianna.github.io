@@ -38,15 +38,13 @@ Educational & Work Background
 
 Recruitment
 ======
-Recruit graduate students in computer science.
+Recruit graduate students in computer science, and wish you:
 
-Wish you
-------
 * Maintain a high level of enthusiasm and patience for research and the unknown.
 * Excellent English skills and can be used in daily scientific research.
 * Master at least one programming language, such as C++, python.
 
-
+<font color=Red size=5>Please contact me by E-mail: cuiqianna@ctgu.edu.cn</font>.
 
 
 
