@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dijkstra算法学习工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.4;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            padding: 18px;
+            border-radius: 16px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.5rem;
+        }
+        
+        .graph-container {
+            width: 100%;
+            height: 280px;
+            border: 2px solid #ddd;
+            margin-bottom: 18px;
+            position: relative;
+            background: #fafafa;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        
+        button {
+            padding: 14px 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: all 0.3s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        button.active {
+            background: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .feedback {
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-size: 15px;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        
+        .incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        
+        .qrcode-section {
+            text-align: center;
+            margin: 25px 0;
+            padding: 18px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .instructions {
+            background: #ecf0f1;
+            padding: 18px;
+            border-radius: 14px;
+            margin-bottom: 22px;
+            font-size: 15px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 17px;
+        }
+        
+        .instructions ol {
+            padding-left: 22px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        .node {
+            position: absolute;
+            width: 42px;
+            height: 42px;
+            background: #3498db;
+            border-radius: 50%;
+            color: white;
+            text-align: center;
+            line-height: 42px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 2;
+            font-size: 16px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+        
+        .node:hover {
+            transform: scale(1.1);
+        }
+        
+        .node.start { background: #27ae60; }
+        .node.end { background: #e74c3c; }
+        .node.visited { background: #9b59b6; }
+        .node.current {
+            box-shadow: 0 0 0 4px #f39c12, 0 0 15px #f39c12;
+        }
+        
+        .edge {
+            position: absolute;
+            background: #7f8c8d;
+            transform-origin: 0 0;
+            z-index: 1;
+            height: 3px;
+        }
+        
+        .edge-weight {
+            position: absolute;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-weight: bold;
+            z-index: 1;
+            font-size: 13px;
+            border: 1px solid #bdc3c7;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .node-selection {
+            background: #34495e;
+            color: white;
+            padding: 18px;
+            border-radius: 14px;
+            margin-bottom: 18px;
+            font-size: 15px;
+        }
+        
+        .node-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 12px;
+        }
+        
+        .node-btn {
+            padding: 12px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .node-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .status-bar {
+            background: #2c3e50;
+            color: white;
+            padding: 14px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 15px;
+        }
+        
+        .server-info {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 14px;
+            margin: 15px 0;
+            color: #856404;
+            font-size: 14px;
+        }
+        
+        .server-info code {
+            background: #e9ecef;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: block;
+            margin: 10px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* 手机横屏适配 */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .graph-container {
+                height: 200px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .controls {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
+            
+            button {
+                padding: 12px 8px;
+                font-size: 14px;
+            }
+        }
+        
+        /* 小屏幕手机 */
+        @media (max-width: 320px) {
+            .graph-container {
+                height: 240px;
+            }
+            
+            .node {
+                width: 38px;
+                height: 38px;
+                line-height: 38px;
+                font-size: 14px;
+            }
+            
+            button {
+                font-size: 14px;
+                padding: 12px 8px;
+            }
+            
+            .instructions {
+                padding: 15px;
+                font-size: 14px;
+            }
+        }
+        
+        /* 二维码样式优化 */
+        #qrcode {
+            margin: 15px auto;
+            padding: 10px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: inline-block;
+        }
+        
+        #qrcode canvas {
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .qr-instructions {
+            margin-top: 15px;
+            padding: 12px;
+            background: #e8f4fc;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .qr-instructions h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        
+        .qr-instructions p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: #5a6c7d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Dijkstra算法学习工具</h1>
+        
+        <div class="instructions">
+            <h3>📋 使用指南</h3>
+            <ol>
+                <li>点击"起点"按钮选择起始节点</li>
+                <li>点击"终点"按钮选择目标节点</li>
+                <li>点击"开始"按钮开始算法执行</li>
+                <li>按照提示选择距离最短的下一个节点</li>
+                <li>系统会实时验证您的选择是否正确</li>
+            </ol>
+        </div>
+        
+        <div class="status-bar" id="status">🎯 请选择起点和终点</div>
+        
+        <div class="graph-container" id="graph"></div>
+        
+        <div class="controls">
+            <button id="start-btn">📍 起点</button>
+            <button id="end-btn">🎯 终点</button>
+            <button id="begin-btn" disabled>🚀 开始</button>
+            <button id="reset-btn">🔄 重置</button>
+        </div>
+        
+        <div class="node-selection" id="node-selection" style="display: none;">
+            <h3>👉 选择下一个节点</h3>
+            <p>当前节点: <strong id="current-node">-</strong></p>
+            <p>请从可访问节点中选择距离最短的节点：</p>
+            <div class="node-buttons" id="available-nodes"></div>
+        </div>
+        
+        <div id="feedback" class="feedback"></div>
+        
+        <div class="qrcode-section">
+            <h3>📱 手机扫描访问</h3>
+            <div id="qrcode"></div>
+            
+            <div class="server-info">
+                <strong>💡 服务器设置说明:</strong>
+                <p>如果二维码无法扫描，请按以下步骤操作：</p>
+                <code>python -m http.server 8000</code>
+                <p>然后在浏览器访问: <strong>http://localhost:8000</strong></p>
+                <p>手机访问: <strong>http://[您的电脑IP]:8000</strong></p>
+            </div>
+            
+            <div class="qr-instructions">
+                <h4>📝 扫描说明：</h4>
+                <p>• 打开手机相机扫描二维码</p>
+                <p>• 或使用微信扫一扫功能</p>
+                <p>• 确保手机和电脑在同一网络</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 图结构
+        const graph = {
+            nodes: [
+                { id: 'A', x: 50, y: 50 },
+                { id: 'B', x: 150, y: 50 },
+                { id: 'C', x: 250, y: 50 },
+                { id: 'D', x: 50, y: 150 },
+                { id: 'E', x: 150, y: 150 },
+                { id: 'F', x: 250, y: 150 }
+            ],
+            edges: [
+                { from: 'A', to: 'B', weight: 4 },
+                { from: 'A', to: 'D', weight: 2 },
+                { from: 'B', to: 'C', weight: 5 },
+                { from: 'B', to: 'E', weight: 10 },
+                { from: 'C', to: 'F', weight: 3 },
+                { from: 'D', to: 'E', weight: 3 },
+                { from: 'E', to: 'F', weight: 4 },
+                { from: 'B', to: 'D', weight: 1 }
+            ]
+        };
+
+        let state = {
+            startNode: null,
+            endNode: null,
+            distances: {},
+            previous: {},
+            visited: [],
+            unvisited: [],
+            currentNode: null,
+            algorithmStarted: false,
+            selectionMode: null
+        };
+
+        const elements = {
+            graph: document.getElementById('graph'),
+            startBtn: document.getElementById('start-btn'),
+            endBtn: document.getElementById('end-btn'),
+            beginBtn: document.getElementById('begin-btn'),
+            resetBtn: document.getElementById('reset-btn'),
+            nodeSelection: document.getElementById('node-selection'),
+            availableNodes: document.getElementById('available-nodes'),
+            feedback: document.getElementById('feedback'),
+            status: document.getElementById('status'),
+            currentNodeSpan: document.getElementById('current-node'),
+            qrcode: document.getElementById('qrcode')
+        };
+
+        function init() {
+            renderGraph();
+            setupEventListeners();
+            generateQRCode();
+            updateStatus('请选择起点和终点');
+        }
+
+        function renderGraph() {
+            elements.graph.innerHTML = '';
+            
+            // 绘制边
+            graph.edges.forEach(edge => {
+                const fromNode = graph.nodes.find(n => n.id === edge.from);
+                const toNode = graph.nodes.find(n => n.id === edge.to);
+                
+                const dx = toNode.x - fromNode.x;
+                const dy = toNode.y - fromNode.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                const edgeEl = document.createElement('div');
+                edgeEl.className = 'edge';
+                edgeEl.style.width = length + 'px';
+                edgeEl.style.left = fromNode.x + 'px';
+                edgeEl.style.top = fromNode.y + 'px';
+                edgeEl.style.transform = `rotate(${angle}deg)`;
+                
+                const weightEl = document.createElement('div');
+                weightEl.className = 'edge-weight';
+                weightEl.textContent = edge.weight;
+                weightEl.style.left = (fromNode.x + toNode.x) / 2 - 15 + 'px';
+                weightEl.style.top = (fromNode.y + toNode.y) / 2 - 15 + 'px';
+                
+                elements.graph.appendChild(edgeEl);
+                elements.graph.appendChild(weightEl);
+            });
+            
+            // 创建节点
+            graph.nodes.forEach(node => {
+                const nodeEl = document.createElement('div');
+                nodeEl.className = 'node';
+                nodeEl.id = `node-${node.id}`;
+                nodeEl.textContent = node.id;
+                nodeEl.style.left = `${node.x - 21}px`;
+                nodeEl.style.top = `${node.y - 21}px`;
+                nodeEl.dataset.id = node.id;
+                nodeEl.title = `节点 ${node.id}`;
+                elements.graph.appendChild(nodeEl);
+            });
+        }
+
+        function setupEventListeners() {
+            elements.startBtn.addEventListener('click', () => setSelectionMode('start'));
+            elements.endBtn.addEventListener('click', () => setSelectionMode('end'));
+            elements.beginBtn.addEventListener('click', beginAlgorithm);
+            elements.resetBtn.addEventListener('click', resetAlgorithm);
+            
+            elements.graph.addEventListener('click', (e) => {
+                const nodeEl = e.target.closest('.node');
+                if (nodeEl) {
+                    const nodeId = nodeEl.dataset.id;
+                    if (state.selectionMode) {
+                        handleNodeSelection(nodeId);
+                    } else if (state.algorithmStarted) {
+                        handleAlgorithmNodeClick(nodeId);
+                    }
+                }
+            });
+        }
+
+        function setSelectionMode(mode) {
+            state.selectionMode = mode;
+            elements.startBtn.classList.toggle('active', mode === 'start');
+            elements.endBtn.classList.toggle('active', mode === 'end');
+            updateStatus(mode === 'start' ? '请点击选择起点节点' : '请点击选择终点节点');
+        }
+
+        function handleNodeSelection(nodeId) {
+            const nodeEl = document.getElementById(`node-${nodeId}`);
+            
+            if (state.selectionMode === 'start') {
+                if (state.startNode) {
+                    document.getElementById(`node-${state.startNode}`).classList.remove('start');
+                }
+                state.startNode = nodeId;
+                nodeEl.classList.add('start');
+                elements.startBtn.textContent = `📍 ${nodeId}`;
+            } else {
+                if (state.endNode) {
+                    document.getElementById(`node-${state.endNode}`).classList.remove('end');
+                }
+                state.endNode = nodeId;
+                nodeEl.classList.add('end');
+                elements.endBtn.textContent = `🎯 ${nodeId}`;
+            }
+            
+            state.selectionMode = null;
+            elements.startBtn.classList.remove('active');
+            elements.endBtn.classList.remove('active');
+            
+            if (state.startNode && state.endNode) {
+                elements.beginBtn.disabled = false;
+                updateStatus('✅ 已选择起点和终点，点击"开始"按钮');
+                showFeedback('🎉 很好！现在点击"开始"按钮开始Dijkstra算法', 'correct');
+            }
+        }
+
+        function beginAlgorithm() {
+            state.algorithmStarted = true;
+            elements.startBtn.disabled = true;
+            elements.endBtn.disabled = true;
+            elements.beginBtn.disabled = true;
+            
+            graph.nodes.forEach(node => {
+                state.distances[node.id] = (node.id === state.startNode) ? 0 : Infinity;
+                state.previous[node.id] = null;
+            });
+            
+            state.unvisited = [...graph.nodes.map(n => n.id)];
+            state.visited = [];
+            state.currentNode = state.startNode;
+            
+            document.getElementById(`node-${state.currentNode}`).classList.add('current');
+            updateStatus(`当前节点: ${state.currentNode}`);
+            
+            updateNeighborDistances(state.currentNode);
+            showAvailableNodes();
+        }
+
+        // 其他函数保持不变...
+        // [保持原有的 updateNeighborDistances, getUnvisitedNeighbors, showAvailableNodes, 
+        //  getNextNode, handleAlgorithmNodeClick, proceedAlgorithm, finishAlgorithm, 
+        //  getShortestPath, showFeedback, updateStatus, resetAlgorithm 函数]
+
+        function generateQRCode() {
+            try {
+                // 清除之前的二维码
+                elements.qrcode.innerHTML = '';
+                
+                // 获取当前页面URL
+                const currentUrl = window.location.href;
+                
+                // 创建canvas元素
+                const canvas = document.createElement('canvas');
+                
+                // 生成二维码
+                QRCode.toCanvas(canvas, currentUrl, {
+                    width: 160,
+                    margin: 2,
+                    color: {
+                        dark: '#2c3e50',
+                        light: '#ffffff'
+                    },
+                    errorCorrectionLevel: 'H'
+                }, function(error) {
+                    if (error) {
+                        console.error('二维码生成错误:', error);
+                        showFallbackQR();
+                        return;
+                    }
+                    
+                    // 添加点击事件，方便测试
+                    canvas.style.cursor = 'pointer';
+                    canvas.title = '点击测试链接';
+                    canvas.onclick = function() {
+                        window.open(currentUrl, '_blank');
+                    };
+                    
+                    elements.qrcode.appendChild(canvas);
+                    
+                    // 添加调试信息
+                    const debugInfo = document.createElement('div');
+                    debugInfo.style.marginTop = '10px';
+                    debugInfo.style.fontSize = '12px';
+                    debugInfo.style.color = '#666';
+                    debugInfo.innerHTML = `URL: ${currentUrl.substring(0, 30)}...`;
+                    elements.qrcode.appendChild(debugInfo);
+                    
+                });
+            } catch (error) {
+                console.error('二维码生成失败:', error);
+                showFallbackQR();
+            }
+        }
+
+        function showFallbackQR() {
+            elements.qrcode.innerHTML = `
+                <div style="text-align: center; padding: 20px; color: #666;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📱</div>
+                    <p style="font-size: 14px; margin-bottom: 10px;">二维码生成失败</p>
+                    <p style="font-size: 12px; color: #999;">请通过HTTP服务器访问此页面</p>
+                    <div style="background: #f0f0f0; padding: 10px; border-radius: 8px; margin-top: 10px;">
+                        <code style="font-size: 12px;">python -m http.server 8000</code>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 初始化
+        init();
+
+        // 暴露全局函数用于调试
+        window.debugGenerateQR = generateQRCode;
+    </script>
+</body>
+</html>
